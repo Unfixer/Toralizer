@@ -1,0 +1,163 @@
+What is? 
+This is a toralizer.
+
+Key takeaway:
+How to redirect library functions. Hijacking and Intercepting of library calls and system calls.
+
+When a network call is made, suppose:
+bash curl http://12.34.45.67 
+the connect() function is invoked, the program establishes a connection to the remote server
+Communication established
+What this function does is basically, it intercepts the connect function and invokes the toralize function instead
+What does this mean?
+This basically means the traffic will be redirected to local proxy server which is a part of Tor Website. Connecting to the TOR network and then to the destination server effectively
+masking your identity.
+
+To start,
+Make your own Tor proxy client
+This client utilizes two types of protocols
+1. SOCKS v4
+2. SOCKS v5
+v4 is much easier to implement and perfect for C
+Refer SOCKS v4 rfc in Google for more info
+One can use Sociopath SCP Client
+Basically installs the SCP Protocol used in every server
+SCP or Secure Copy Protocol is a method devised so that one can transfer files between local or remote host
+It utilizes Secure Shell (SSH) for authentication and data transfer to keep data confidential
+SCP speed >>> SFTP speed
+Basically it is a secure Implementation of Remote Copy Protocol (RCP)
+SCP File management <<< SFTP File Management
+
+the .h is header file that contains stuff which is supposed to be shared with the other parts of my code
+
+A predicate or property is a function or an operation that returns true or false
+
+TOR network can often be slow, be patient.
+
+
+
+How does the technique work for Redirecting Library Calls?
+When you compile, you have two options, either you can compile it statically or dynamically
+To understand further refer to the link: https://stackoverflow.com/questions/12600296/dynamically-compiled-language-vs-statically-compiled-language
+
+What and Why?
+Compiling it statically, any library calls or functions for eg, printf, that code will be saved in the program's .exe file
+That is not very demure, not very optimized because there will be a lot of duplications
+Thats why use shared library
+
+When compiled into a shared library, we can make a program execute our function, here connect(), as they are compiled and used based on a list or a prioritization order
+If we name our own function as connect then via the shared library we can make any program use our function instead by making it priority no.1
+That way we can intercept and hijack the library call and system call because all system calls have wrappers in the library.
+Reference: https://rjordaney.is/lectures/hooking_shared_lib/
+
+To redirect the library functions go on to type in the terminal
+man 2 connect
+look at the synopsis, you will see a function:
+int connect(int sockfd, const struct sockaddr *addr, socklen_t addrlen);
+Copy paste it in the int main (toralize.c)
+
+Then remove the main function and make the connect on be the main function
+CINEMA! 
+Remember to update the main in toralize.h file or whatever library you made
+Why no main()?
+Because this is no application, this is just a couple of functions.
+
+// delete these lines as well
+
+if (argc < 3) {
+        fprintf(stderr, "Usage  %s <host> <port>\n",
+        argv[0]);
+
+        return -1;
+    }
+
+    host = argv[1];
+    port = atoi(argv[2]);  // atoi converts numbers in string format to regular numbers, this has to be done because ofcourse PORT is string of numbers
+
+
+// In my code you wont find these lines because ofcourse I have deleted them
+This is to explain the entire creation with transparency
+
+// also at line 53 remember not to call connect because we are not supposed to call ourselves
+call the pointer 'p' instead.
+
+At line 28 where Flag 1 is typed out
+there was: char *host; which was deleted
+comment: // host we wish to connect to
+
+At line 29 delete the port as well
+Update the dependent lines as well
+Update Request signature at toralize.h as well
+
+
+At line 20, Flag 2, there was
+.... = htons(dstport); // to switch to network byte order
+We dont need this because the network byte order is already present
+
+At line 21, Flag 3, there was
+.... = inet_addr(dstip);
+
+At line 84, Flag 4, there was
+ memset(tmp, 0, 512);
+    snprintf(tmp, 511, 
+    
+          "HEAD /HTTP/1.0\r\n"
+          "Host: www.networktechnology.org\r\n"
+          "\r\n");
+          write(s, tmp, strlen(tmp));
+
+          memset(tmp, 0, 512);
+
+          read(s, tmp, 511);
+          printf("%s'\n", tmp);
+         close (s); // look at the codeflow to understand this part
+
+This was for testing mainly
+
+After that look at my code and make the necessary changes
+Compile the code
+do pwd
+do #<whatever directory>/toralize.so // add toralize.so, the path to the library
+Do sudo and go to your /usr/bin and create the file toralize where you will write the bash file
+The bash file that I wrote will be provided to you within this folder only no tension okay?
+
+Give permissions by:
+chmod 755 toralize
+
+Understand more of chmod 755 at the link: https://www.warp.dev/terminus/chmod-755
+Then:
+
+host <website>
+// obtain ip address
+// lets test on curl
+
+toralize curl http://<IP addr>
+// if given error code (other than 90)
+// restart tor service in sudo mode
+// if error persists go back to: https://www.openssh.com/txt/socks4.protocol  // rfc sock v4
+// look at the errors and troubleshoot accordingly
+// no tension I will help
+// if no error given and just says connected to proxy and gives out no error execute the following commands
+// ping <IP addr>
+// env - telnet <IP addr> <PORT>  // if says telnet not found run it on other instance
+// Check if server is responding or not
+// Run toralize curl <web or ip>
+// Check if error persists
+// Check using telnet if direct connection possible
+// Check for any problem when grabbing the IP addr
+// Maybe remove any reference (&)
+
+Basically the USAGE is:
+1. make Toralizer
+2. host <website name in the format www.<Whatever>.com>
+3. toralize <whatever, here curl>
+toralize curl http://<Ip addr>  (not IPv6)
+Congrats! you are secure!
+
+
+Disclaimer: This only hides the IP address, not the DNS request.
+            How you use this code is not my responsibility. Stay safe.
+
+
+
+
